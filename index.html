@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Swiper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            touch-action: pan-y;
+            font-family: Arial, sans-serif;
+        }
+        
+        .swiper-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .swiper-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.8s ease-in-out;
+        }
+        
+        .swiper-slide img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .slide-1 {
+            transform: translateX(0);
+            z-index: 2;
+        }
+        
+        .slide-2 {
+            transform: translateX(100%);
+            z-index: 1;
+        }
+        
+        .swipe-left .slide-1 {
+            transform: translateX(-100%);
+        }
+        
+        .swipe-left .slide-2 {
+            transform: translateX(0);
+        }
+        
+        .instructions {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            z-index: 10;
+        }
+        
+        .download-link {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: #2d190f;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+			font-size: x-small
+        }
+        
+        .show-download {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="swiper-container" id="swiper">
+        <div class="swiper-slide slide-1">
+            <img src="1.jpg" alt="First Image" id="image1">
+        </div>
+        <div class="swiper-slide slide-2">
+            <img src="2.jpg" alt="Second Image" id="image2">
+        </div>
+        <a href="#" class="download-link" id="downloadLink">Download and Save Event</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const swiper = document.getElementById('swiper');
+            const downloadLink = document.getElementById('downloadLink');
+            let startX = 0;
+            let currentX = 0;
+            let isSwiping = false;
+            let currentSlide = 1;
+            let autoSwipeTimeout;
+            
+            // Sample ICS file content (replace with your actual event data)
+            const icsContent = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//Save The Data A&T//ES',
+                'BEGIN:VEVENT',
+                'UID:12345@yourdomain.com',
+                'DTSTAMP:20250920T120000Z',
+                'DTSTART:20250920T090000Z',
+                'DTEND:20250920T170000Z',
+                'SUMMARY:Save The Data A&T',
+                'DESCRIPTION:Confirma la asistencia a nuestro evento',
+                'LOCATION:Guayaquil, Ecuador',
+                'END:VEVENT',
+                'END:VCALENDAR'
+            ].join('\n');
+            
+            // Create download link for ICS file
+            function createDownloadLink() {
+                const blob = new Blob([icsContent], { type: 'text/calendar' });
+                const url = URL.createObjectURL(blob);
+                downloadLink.href = url;
+                downloadLink.download = 'event.ics';
+            }
+            
+            // Set up auto-swipe after 3 seconds
+            function setupAutoSwipe() {
+                clearTimeout(autoSwipeTimeout);
+                autoSwipeTimeout = setTimeout(() => {
+                    swipeToNext();
+                    setupAutoSwipe(); // Set up next auto-swipe
+                }, 3000);
+            }
+            
+            // Swipe to next image
+            function swipeToNext() {
+                currentSlide = 2;
+                swiper.classList.add('swipe-left');
+                downloadLink.classList.add('show-download');
+            }
+            
+            // Swipe to previous image
+            function swipeToPrev() {
+                currentSlide = 1;
+                swiper.classList.remove('swipe-left');
+                downloadLink.classList.remove('show-download');
+            }
+            
+            // Update download link visibility based on current slide
+            function updateDownloadLinkVisibility() {
+                if (currentSlide === 2) {
+                    downloadLink.classList.add('show-download');
+                } else {
+                    downloadLink.classList.remove('show-download');
+                }
+            }
+            
+            // Touch events for mobile
+            swiper.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                currentX = startX;
+                isSwiping = true;
+                clearTimeout(autoSwipeTimeout); // Cancel auto-swipe during user interaction
+            });
+            
+            swiper.addEventListener('touchmove', (e) => {
+                if (!isSwiping) return;
+                currentX = e.touches[0].clientX;
+            });
+            
+            swiper.addEventListener('touchend', () => {
+                if (!isSwiping) return;
+                isSwiping = false;
+                
+                const diff = startX - currentX;
+                if (Math.abs(diff) > 50) { // Minimum swipe distance
+                    if (diff > 0 && currentSlide === 1) {
+                        swipeToNext();
+                    } else if (diff < 0 && currentSlide === 2) {
+                        swipeToPrev();
+                    }
+                    updateDownloadLinkVisibility();
+                }
+                
+                setupAutoSwipe(); // Resume auto-swipe after user interaction
+            });
+            
+            // Keyboard events for desktop
+            document.addEventListener('keydown', (e) => {
+                clearTimeout(autoSwipeTimeout); // Cancel auto-swipe during user interaction
+                
+                if (e.key === 'ArrowRight' && currentSlide === 1) {
+                    swipeToNext();
+                } else if (e.key === 'ArrowLeft' && currentSlide === 2) {
+                    swipeToPrev();
+                }
+                updateDownloadLinkVisibility();
+                
+                setupAutoSwipe(); // Resume auto-swipe after user interaction
+            });
+            
+            // Initialize download link
+            createDownloadLink();
+            
+            // Start the auto-swipe
+            setupAutoSwipe();
+        });
+    </script>
+</body>
+</html>
