@@ -2,225 +2,179 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Save the date A&T</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Image Swiper</title>
     <style>
-        * {
+        body, html {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
+            height: 100%;
             overflow: hidden;
             touch-action: pan-y;
-            font-family: Arial, sans-serif;
         }
         
         .swiper-container {
             position: relative;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
         }
         
-        .swiper-slide {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .image-container {
+            display: flex;
             width: 100%;
             height: 100%;
+            transition: transform 0.3s ease;
+        }
+        
+        .image-slide {
+            flex: 0 0 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        .image-wrapper {
+            position: relative;
+            max-height: 100%;
+            max-width: 100%;
+        }
+        
+        .image-slide img {
+            max-height: 100vh;
+            max-width: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        
+        .caption-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            top: 50%; /* Starts from middle of image */
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.8s ease-in-out;
-        }
-        
-        .swiper-slide img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-        
-        .slide-1 {
-            transform: translateX(0);
-            z-index: 2;
-        }
-        
-        .slide-2 {
-            transform: translateX(100%);
-            z-index: 1;
-        }
-        
-        .swipe-left .slide-1 {
-            transform: translateX(-100%);
-        }
-        
-        .swipe-left .slide-2 {
-            transform: translateX(0);
-        }
-        
-        .instructions {
-            position: fixed;
-            bottom: 20px;
-            left: 0;
-            right: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+            font-size: clamp(14px, 3vw, 24px);
             text-align: center;
-            color: white;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            z-index: 10;
+            display: none;
+            width: 100%; /* Matches image width */
         }
         
-        .download-link {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 10px 15px;
-            background-color: #2d190f;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-weight: bold;
-            z-index: 10;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-			font-size: x-small
-        }
-        
-        .show-download {
-            opacity: 1;
+        /* Only show overlay on second slide */
+        .image-slide:nth-child(2) .caption-overlay {
+            display: flex;
         }
     </style>
 </head>
 <body>
-    <div class="swiper-container" id="swiper">
-        <div class="swiper-slide slide-1">
-            <img src="1.jpg" alt="First Image" id="image1">
+    <div class="swiper-container">
+        <div class="image-container">
+            <div class="image-slide">
+                <div class="image-wrapper">
+                    <img src="1.jpg" alt="Image 1">
+                </div>
+            </div>
+            <div class="image-slide">
+                <div class="image-wrapper">
+                    <img src="2.jpg" alt="Image 2">
+                    <!--<div class="caption-overlay">
+                        This text appears over the second image, covering from the middle to the bottom
+                    </div>-->
+                </div>
+            </div>
         </div>
-        <div class="swiper-slide slide-2">
-            <img src="2.jpg" alt="Second Image" id="image2">
-        </div>
-        <a href="#" class="download-link" id="downloadLink">Download and Save Event</a>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const swiper = document.getElementById('swiper');
-            const downloadLink = document.getElementById('downloadLink');
-            let startX = 0;
-            let currentX = 0;
-            let isSwiping = false;
-            let currentSlide = 1;
-            let autoSwipeTimeout;
+        let startX = 0;
+        let currentX = 0;
+        let currentSlide = 0;
+        const imageContainer = document.querySelector('.image-container');
+        const slides = document.querySelectorAll('.image-slide');
+        const totalSlides = slides.length;
+        
+        // Initialize
+        updateSliderPosition();
+        
+        // Touch events
+        document.querySelector('.swiper-container').addEventListener('touchstart', handleTouchStart, { passive: false });
+        document.querySelector('.swiper-container').addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.querySelector('.swiper-container').addEventListener('touchend', handleTouchEnd);
+        
+        // Mouse events for desktop
+        document.querySelector('.swiper-container').addEventListener('mousedown', handleMouseDown);
+        
+        function handleTouchStart(e) {
+            startX = e.touches[0].clientX;
+            currentX = -currentSlide * 100;
+            e.preventDefault();
+        }
+        
+        function handleTouchMove(e) {
+            const x = e.touches[0].clientX;
+            const diff = startX - x;
+            imageContainer.style.transform = `translateX(${currentX + diff}%)`;
+            e.preventDefault();
+        }
+        
+        function handleTouchEnd(e) {
+            const x = e.changedTouches[0].clientX;
+            const diff = startX - x;
             
-            // Sample ICS file content (replace with your actual event data)
-            const icsContent = [
-                'BEGIN:VCALENDAR',
-                'VERSION:2.0',
-                'PRODID:-//Save The Data A&T//ES',
-                'BEGIN:VEVENT',
-                'UID:12345@yourdomain.com',
-                'DTSTAMP:20250920T120000Z',
-                'DTSTART:20250920T090000Z',
-                'DTEND:20250920T170000Z',
-                'SUMMARY:Save The Data A&T',
-                'DESCRIPTION:Confirma la asistencia a nuestro evento',
-                'LOCATION:Guayaquil, Ecuador',
-                'END:VEVENT',
-                'END:VCALENDAR'
-            ].join('\n');
-            
-            // Create download link for ICS file
-            function createDownloadLink() {
-                const blob = new Blob([icsContent], { type: 'text/calendar' });
-                const url = URL.createObjectURL(blob);
-                downloadLink.href = url;
-                downloadLink.download = 'event.ics';
+            if (diff > 50 && currentSlide < totalSlides - 1) {
+                // Swipe left
+                currentSlide++;
+            } else if (diff < -50 && currentSlide > 0) {
+                // Swipe right
+                currentSlide--;
             }
             
-            // Set up auto-swipe after 3 seconds
-            function setupAutoSwipe() {
-                clearTimeout(autoSwipeTimeout);
-                autoSwipeTimeout = setTimeout(() => {
-                    swipeToNext();
-                    setupAutoSwipe(); // Set up next auto-swipe
-                }, 3000);
+            updateSliderPosition();
+        }
+        
+        function handleMouseDown(e) {
+            startX = e.clientX;
+            currentX = -currentSlide * 100;
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            e.preventDefault();
+        }
+        
+        function handleMouseMove(e) {
+            const x = e.clientX;
+            const diff = startX - x;
+            imageContainer.style.transform = `translateX(${currentX + diff}%)`;
+            e.preventDefault();
+        }
+        
+        function handleMouseUp(e) {
+            const x = e.clientX;
+            const diff = startX - x;
+            
+            if (diff > 50 && currentSlide < totalSlides - 1) {
+                currentSlide++;
+            } else if (diff < -50 && currentSlide > 0) {
+                currentSlide--;
             }
             
-            // Swipe to next image
-            function swipeToNext() {
-                currentSlide = 2;
-                swiper.classList.add('swipe-left');
-                downloadLink.classList.add('show-download');
-            }
+            updateSliderPosition();
             
-            // Swipe to previous image
-            function swipeToPrev() {
-                currentSlide = 1;
-                swiper.classList.remove('swipe-left');
-                downloadLink.classList.remove('show-download');
-            }
-            
-            // Update download link visibility based on current slide
-            function updateDownloadLinkVisibility() {
-                if (currentSlide === 2) {
-                    downloadLink.classList.add('show-download');
-                } else {
-                    downloadLink.classList.remove('show-download');
-                }
-            }
-            
-            // Touch events for mobile
-            swiper.addEventListener('touchstart', (e) => {
-                startX = e.touches[0].clientX;
-                currentX = startX;
-                isSwiping = true;
-                clearTimeout(autoSwipeTimeout); // Cancel auto-swipe during user interaction
-            });
-            
-            swiper.addEventListener('touchmove', (e) => {
-                if (!isSwiping) return;
-                currentX = e.touches[0].clientX;
-            });
-            
-            swiper.addEventListener('touchend', () => {
-                if (!isSwiping) return;
-                isSwiping = false;
-                
-                const diff = startX - currentX;
-                if (Math.abs(diff) > 50) { // Minimum swipe distance
-                    if (diff > 0 && currentSlide === 1) {
-                        swipeToNext();
-                    } else if (diff < 0 && currentSlide === 2) {
-                        swipeToPrev();
-                    }
-                    updateDownloadLinkVisibility();
-                }
-                
-                setupAutoSwipe(); // Resume auto-swipe after user interaction
-            });
-            
-            // Keyboard events for desktop
-            document.addEventListener('keydown', (e) => {
-                clearTimeout(autoSwipeTimeout); // Cancel auto-swipe during user interaction
-                
-                if (e.key === 'ArrowRight' && currentSlide === 1) {
-                    swipeToNext();
-                } else if (e.key === 'ArrowLeft' && currentSlide === 2) {
-                    swipeToPrev();
-                }
-                updateDownloadLinkVisibility();
-                
-                setupAutoSwipe(); // Resume auto-swipe after user interaction
-            });
-            
-            // Initialize download link
-            createDownloadLink();
-            
-            // Start the auto-swipe
-            setupAutoSwipe();
-        });
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        }
+        
+        function updateSliderPosition() {
+            imageContainer.style.transform = `translateX(-${currentSlide * 100}%)`;
+        }
     </script>
 </body>
 </html>
