@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Image Swiper</title>
     <style>
-        body, html {
+        body, html, #site {
             margin: 0;
             padding: 0;
             height: 100%;
@@ -76,23 +76,26 @@
     </style>
 </head>
 <body>
-    <div class="swiper-container">
-        <div class="image-container">
-            <div class="image-slide">
-                <div class="image-wrapper">
-                    <img src="1.jpg" alt="Image 1">
+    <div id="site">
+        <div class="swiper-container">
+            <div class="image-container">
+                <div class="image-slide">
+                    <div class="image-wrapper">
+                        <img src="1.jpg" alt="Image 1">
+                    </div>
                 </div>
-            </div>
-            <div class="image-slide">
-                <div class="image-wrapper">
-                    <img src="2.jpg" alt="Image 2">
-                    <!--<div class="caption-overlay">
-                        This text appears over the second image, covering from the middle to the bottom
-                    </div>-->
+                <div class="image-slide">
+                    <div class="image-wrapper">
+                        <img src="2.jpg" alt="Image 2">
+                        <!--<div class="caption-overlay">
+                            This text appears over the second image, covering from the middle to the bottom
+                        </div>-->
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    
 
     <script>
         let startX = 0;
